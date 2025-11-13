@@ -1,0 +1,5 @@
+{
+  "name": "AI Site Crawler",
+  "description": "An AI-powered site crawler that navigates a website by following internal links, analyzing each page for status, metadata (title, description, H1), and link counts.",
+  "requestFramePermissions": []
+}
