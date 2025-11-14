@@ -5,8 +5,8 @@ import { createClient } from '@supabase/supabase-js';
 
 // IMPORTANT: REPLACE WITH YOUR SUPABASE PROJECT DETAILS
 // You can find these in your Supabase project settings -> API
-const supabaseUrl = 'https://zsksepddzgfgsxumbtwl.supabase.co'; // e.g., 'https://xyz.supabase.co'
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpza3NlcGRkemdmZ3N4dW1idHdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwNDE0MzYsImV4cCI6MjA3ODYxNzQzNn0.2ba5El50z_Q5RM0oGunjHYNzmvcB_nR6SX3jWdoXR6g'; // This is the public 'anon' key
+const supabaseUrl = ''; // e.g., 'https://xyz.supabase.co'
+const supabaseAnonKey = ''; // This is the public 'anon' key
 
 export const isSupabaseConfigured = () => {
     // A simple check to see if the placeholders have been replaced.
