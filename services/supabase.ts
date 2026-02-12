@@ -1,17 +1,30 @@
 
 
-
 import { createClient } from '@supabase/supabase-js';
 
-// IMPORTANT: REPLACE WITH YOUR SUPABASE PROJECT DETAILS
-// You can find these in your Supabase project settings -> API
-const supabaseUrl = ''; // e.g., 'https://xyz.supabase.co'
-const supabaseAnonKey = ''; // This is the public 'anon' key
+const FALLBACK_SUPABASE_URL = 'https://placeholder.supabase.co';
+const FALLBACK_SUPABASE_ANON_KEY = 'placeholder-anon-key';
+
+// Priority order: Vite env vars, then optional globals patched at deploy time.
+const envSupabaseUrl = import.meta.env.VITE_SUPABASE_URL || (globalThis as any).__SUPABASE_URL__ || '';
+const envSupabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || (globalThis as any).__SUPABASE_ANON_KEY__ || '';
 
 export const isSupabaseConfigured = () => {
-    // A simple check to see if the placeholders have been replaced.
-    return !supabaseUrl.includes('YOUR_SUPABASE_URL') && !supabaseAnonKey.includes('YOUR_SUPABASE_ANON_KEY');
+    const url = (envSupabaseUrl || '').trim();
+    const key = (envSupabaseAnonKey || '').trim();
+
+    const hasValues = Boolean(url) && Boolean(key);
+    const hasPlaceholderValues =
+        /your[_-]?supabase[_-]?url/i.test(url) ||
+        /your[_-]?supabase[_-]?anon[_-]?key/i.test(key) ||
+        url.includes('placeholder.supabase.co') ||
+        key.includes('placeholder-anon-key');
+
+    return hasValues && !hasPlaceholderValues;
 };
+
+const supabaseUrl = isSupabaseConfigured() ? envSupabaseUrl : FALLBACK_SUPABASE_URL;
+const supabaseAnonKey = isSupabaseConfigured() ? envSupabaseAnonKey : FALLBACK_SUPABASE_ANON_KEY;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
@@ -64,6 +77,7 @@ export const checkDatabaseHealth = async (): Promise<'healthy' | 'uninitialized'
 //          AI AUDITOR PRO - COMPLETE SUPABASE DATABASE SETUP SCRIPT
 // ================================================================================
 export const DATABASE_SETUP_SCRIPT = `
+
 -- ================================================================================
 -- INSTRUCTIONS:
 -- 1. Run this entire script in your Supabase Project's SQL Editor.

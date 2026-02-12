@@ -27,7 +27,7 @@ function App() {
                         This application requires a connection to a Supabase project to function.
                     </p>
                     <p className="mt-2 text-slate-400">
-                        Please edit the file <code className="bg-slate-900 text-cyan-400 px-2 py-1 rounded-md text-sm">services/supabase.ts</code> and replace the placeholder values for <code className="bg-slate-900 text-cyan-400 px-2 py-1 rounded-md text-sm">supabaseUrl</code> and <code className="bg-slate-900 text-cyan-400 px-2 py-1 rounded-md text-sm">supabaseAnonKey</code> with your project's credentials.
+                        Please set <code className="bg-slate-900 text-cyan-400 px-2 py-1 rounded-md text-sm">VITE_SUPABASE_URL</code> and <code className="bg-slate-900 text-cyan-400 px-2 py-1 rounded-md text-sm">VITE_SUPABASE_ANON_KEY</code> in your deployment environment, then redeploy.
                     </p>
                 </div>
             </div>
