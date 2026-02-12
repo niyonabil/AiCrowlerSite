@@ -1,5 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { CrawledPage, SitemapEntry, RobotsTxtAnalysis, AIAgent, AdsTxtAnalysis } from '../types';
+import { AI_PROVIDERS, getChatCompletionEndpoint } from './aiProviders';
 
 // Use a CORS proxy to fetch content directly from websites, bypassing browser security limitations.
 const PROXY_URL = 'https://corsproxy.io/?';
@@ -125,7 +126,7 @@ export const discoverUrlsToCrawl = async (startUrl: string, crawlDepth: number):
 };
 
 export const analyzePageBatch = async (urls: string[], agent: AIAgent, apiKey: string): Promise<CrawledPage[]> => {
-    if (!apiKey) throw new Error(`${agent.provider === 'gemini' ? 'Gemini' : 'OpenAI'} API key is required.`);
+    if (!apiKey) throw new Error(`${AI_PROVIDERS[agent.provider].label} API key is required.`);
     
     const pagesWithHtml = await Promise.all(
         urls.map(async url => {
@@ -200,16 +201,16 @@ Return ONLY a valid JSON array of objects, matching this structure: \`{"url": st
             if (jsonText === "") throw new Error("AI returned a response without valid JSON content.");
             parsedData = JSON.parse(jsonText);
 
-        } else if (agent.provider === 'openai' || agent.provider === 'openrouter') {
-            const isOpenRouter = agent.provider === 'openrouter';
-            const apiUrl = isOpenRouter ? 'https://openrouter.ai/api/v1/chat/completions' : 'https://api.openai.com/v1/chat/completions';
-            
+        } else {
+            const apiUrl = getChatCompletionEndpoint(agent.provider);
+            const providerConfig = AI_PROVIDERS[agent.provider];
+
             const headers: Record<string, string> = {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${apiKey}`
             };
-        
-            if (isOpenRouter) {
+
+            if (providerConfig.needsReferer) {
                 headers['HTTP-Referer'] = location.origin;
                 headers['X-Title'] = 'AI Auditor Pro';
             }
@@ -229,7 +230,7 @@ Return ONLY a valid JSON array of objects, matching this structure: \`{"url": st
             });
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(`${isOpenRouter ? 'OpenRouter' : 'OpenAI'} API Error: ${errorData.error.message}`);
+                throw new Error(`${providerConfig.label} API Error: ${errorData.error?.message || response.statusText}`);
             }
             const result = await response.json();
             const content = result.choices[0].message.content;
@@ -295,16 +296,16 @@ ${sitemapContent}
             const jsonText = extractJson(response.text);
             if (jsonText === "" || jsonText === "[]") return [];
             parsedData = JSON.parse(jsonText);
-        } else if (agent.provider === 'openai' || agent.provider === 'openrouter') {
-            const isOpenRouter = agent.provider === 'openrouter';
-            const apiUrl = isOpenRouter ? 'https://openrouter.ai/api/v1/chat/completions' : 'https://api.openai.com/v1/chat/completions';
-            
+        } else {
+            const apiUrl = getChatCompletionEndpoint(agent.provider);
+            const providerConfig = AI_PROVIDERS[agent.provider];
+
             const headers: Record<string, string> = {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${apiKey}`
             };
 
-            if (isOpenRouter) {
+            if (providerConfig.needsReferer) {
                 headers['HTTP-Referer'] = location.origin;
                 headers['X-Title'] = 'AI Auditor Pro';
             }
@@ -318,7 +319,7 @@ ${sitemapContent}
                     response_format: { type: "json_object" }
                 })
             });
-            if (!response.ok) throw new Error(`${isOpenRouter ? 'OpenRouter' : 'OpenAI'} request failed`);
+            if (!response.ok) throw new Error(`${providerConfig.label} request failed`);
             const result = await response.json();
             const content = result.choices[0].message.content;
             const extractedContent = extractJson(content);
@@ -344,7 +345,7 @@ ${sitemapContent}
 }
 
 export const fetchAllUrlsFromSitemaps = async (url: string, agent: AIAgent, apiKey: string): Promise<SitemapEntry[]> => {
-    if (!apiKey) throw new Error(`${agent.provider} API key is required.`);
+    if (!apiKey) throw new Error(`${AI_PROVIDERS[agent.provider].label} API key is required.`);
 
     const visitedSitemaps = new Set<string>();
     const allEntries: SitemapEntry[] = [];
@@ -402,7 +403,7 @@ export const fetchAllUrlsFromSitemaps = async (url: string, agent: AIAgent, apiK
 };
 
 export const analyzeRobotsTxt = async (url: string, agent: AIAgent, apiKey: string): Promise<RobotsTxtAnalysis> => {
-    if (!apiKey) throw new Error(`${agent.provider} API key is required.`);
+    if (!apiKey) throw new Error(`${AI_PROVIDERS[agent.provider].label} API key is required.`);
 
     let robotsTxtContent: string;
     try {
@@ -431,16 +432,16 @@ ${robotsTxtContent}
             const jsonText = extractJson(response.text);
             if (jsonText === "") return { rules: [], sitemaps: [] };
             parsedData = JSON.parse(jsonText);
-        } else if (agent.provider === 'openai' || agent.provider === 'openrouter') {
-            const isOpenRouter = agent.provider === 'openrouter';
-            const apiUrl = isOpenRouter ? 'https://openrouter.ai/api/v1/chat/completions' : 'https://api.openai.com/v1/chat/completions';
+        } else {
+            const apiUrl = getChatCompletionEndpoint(agent.provider);
+            const providerConfig = AI_PROVIDERS[agent.provider];
 
             const headers: Record<string, string> = {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${apiKey}`
             };
 
-            if (isOpenRouter) {
+            if (providerConfig.needsReferer) {
                 headers['HTTP-Referer'] = location.origin;
                 headers['X-Title'] = 'AI Auditor Pro';
             }
@@ -454,7 +455,7 @@ ${robotsTxtContent}
                     response_format: { type: "json_object" }
                 })
             });
-            if (!response.ok) throw new Error(`${isOpenRouter ? 'OpenRouter' : 'OpenAI'} request failed`);
+            if (!response.ok) throw new Error(`${providerConfig.label} request failed`);
             const result = await response.json();
             const content = result.choices[0].message.content;
             parsedData = JSON.parse(content);
@@ -475,7 +476,7 @@ ${robotsTxtContent}
 };
 
 export const analyzeAdsTxt = async (url: string, agent: AIAgent, apiKey: string): Promise<AdsTxtAnalysis> => {
-    if (!apiKey) throw new Error(`${agent.provider} API key is required.`);
+    if (!apiKey) throw new Error(`${AI_PROVIDERS[agent.provider].label} API key is required.`);
 
     let adsTxtContent: string;
     try {
@@ -517,11 +518,11 @@ ${adsTxtContent}
             const jsonText = extractJson(response.text);
             if (jsonText === "") return { records: [], malformedLines: [] };
             parsedData = JSON.parse(jsonText);
-        } else if (agent.provider === 'openai' || agent.provider === 'openrouter') {
-            const isOpenRouter = agent.provider === 'openrouter';
-            const apiUrl = isOpenRouter ? 'https://openrouter.ai/api/v1/chat/completions' : 'https://api.openai.com/v1/chat/completions';
-            const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` };
-            if (isOpenRouter) {
+        } else {
+            const apiUrl = getChatCompletionEndpoint(agent.provider);
+            const providerConfig = AI_PROVIDERS[agent.provider];
+            const headers: Record<string, string> = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` };
+            if (providerConfig.needsReferer) {
                 headers['HTTP-Referer'] = location.origin;
                 headers['X-Title'] = 'AI Auditor Pro';
             }
@@ -534,7 +535,7 @@ ${adsTxtContent}
                     response_format: { type: "json_object" }
                 })
             });
-            if (!response.ok) throw new Error(`${isOpenRouter ? 'OpenRouter' : 'OpenAI'} request failed`);
+            if (!response.ok) throw new Error(`${providerConfig.label} request failed`);
             const result = await response.json();
             const content = result.choices[0].message.content;
             parsedData = JSON.parse(content);
@@ -555,7 +556,7 @@ ${adsTxtContent}
 };
 
 export const generateBlogPost = async (topic: string, agent: AIAgent, apiKey: string): Promise<{ title: string; content: string; }> => {
-    if (!apiKey) throw new Error(`${agent.provider} API key is required.`);
+    if (!apiKey) throw new Error(`${AI_PROVIDERS[agent.provider].label} API key is required.`);
 
     const prompt = `${agent.system_prompt}
 **Task**: You are a creative and engaging blog post writer. Generate a complete blog post based on the provided topic.
@@ -604,11 +605,11 @@ export const generateBlogPost = async (topic: string, agent: AIAgent, apiKey: st
             const jsonText = extractJson(response.text);
             if (jsonText === "") throw new Error("AI returned empty content.");
             parsedData = JSON.parse(jsonText);
-        } else if (agent.provider === 'openai' || agent.provider === 'openrouter') {
-            const isOpenRouter = agent.provider === 'openrouter';
-            const apiUrl = isOpenRouter ? 'https://openrouter.ai/api/v1/chat/completions' : 'https://api.openai.com/v1/chat/completions';
+        } else {
+            const apiUrl = getChatCompletionEndpoint(agent.provider);
+            const providerConfig = AI_PROVIDERS[agent.provider];
             const headers: Record<string, string> = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` };
-            if (isOpenRouter) {
+            if (providerConfig.needsReferer) {
                 headers['HTTP-Referer'] = location.origin;
                 headers['X-Title'] = 'AI Auditor Pro';
             }
@@ -623,7 +624,7 @@ export const generateBlogPost = async (topic: string, agent: AIAgent, apiKey: st
             });
             if (!response.ok) {
                  const errorData = await response.json();
-                 throw new Error(`${isOpenRouter ? 'OpenRouter' : 'OpenAI'} API Error: ${errorData.error.message}`);
+                 throw new Error(`${providerConfig.label} API Error: ${errorData.error?.message || response.statusText}`);
             }
             const result = await response.json();
             const content = result.choices[0].message.content;

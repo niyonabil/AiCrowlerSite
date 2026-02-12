@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { UserProfile, ApiKeys, Settings } from '../types';
 import { encrypt, decrypt } from '../services/crypto';
 import { supabase } from '../services/supabase';
+import { AI_PROVIDERS } from '../services/aiProviders';
 
 type DashboardPage = 'overview' | 'audit' | 'agents' | 'billing' | 'settings' | 'blog' | 'users';
 
@@ -25,7 +26,8 @@ const SettingsCard: React.FC<{ title: string; children: React.ReactNode }> = ({ 
 );
 
 const emptyApiKeys: ApiKeys = { 
-    gemini: '', openAI: '', openRouter: '', googleIndexing: '', indexNow: '', googleClientId: '',
+    gemini: '', openAI: '', openRouter: '', mistral: '', groq: '', together: '', fireworks: '', deepseek: '', xai: '', perplexity: '', ollamaCloud: '',
+    googleIndexing: '', indexNow: '', googleClientId: '',
     stripePublicKey: '', stripeSecretKey: '', paypalClientId: '', paypalClientSecret: ''
 };
 
@@ -153,9 +155,18 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ user, onUpdateUser, 
                      <div className="max-w-md space-y-4">
                         <div>
                             <label className="block text-sm font-bold text-slate-300 mb-2">AI Providers</label>
-                            <input type="password" placeholder="Enter your Gemini key" value={apiKeys.gemini} onChange={(e) => setApiKeys(k => ({...k, gemini: e.target.value}))} className="w-full bg-slate-700 rounded-md p-2 border border-slate-600 focus:ring-cyan-500 focus:border-cyan-500" />
-                            <input type="password" placeholder="Enter your OpenAI key" value={apiKeys.openAI} onChange={(e) => setApiKeys(k => ({...k, openAI: e.target.value}))} className="w-full bg-slate-700 rounded-md p-2 border border-slate-600 focus:ring-cyan-500 focus:border-cyan-500 mt-2" />
-                            <input type="password" placeholder="Enter your OpenRouter key" value={apiKeys.openRouter} onChange={(e) => setApiKeys(k => ({...k, openRouter: e.target.value}))} className="w-full bg-slate-700 rounded-md p-2 border border-slate-600 focus:ring-cyan-500 focus:border-cyan-500 mt-2" />
+                            <div className="space-y-2">
+                                {Object.entries(AI_PROVIDERS).map(([provider, config]) => (
+                                    <input
+                                        key={provider}
+                                        type="password"
+                                        placeholder={`Enter your ${config.label} API key`}
+                                        value={apiKeys[config.apiKeyField]}
+                                        onChange={(e) => setApiKeys(k => ({ ...k, [config.apiKeyField]: e.target.value }))}
+                                        className="w-full bg-slate-700 rounded-md p-2 border border-slate-600 focus:ring-cyan-500 focus:border-cyan-500"
+                                    />
+                                ))}
+                            </div>
                         </div>
                          <div>
                             <label className="block text-sm font-bold text-slate-300 mb-2">Indexing Services</label>
@@ -182,9 +193,16 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ user, onUpdateUser, 
                                 <h3 className="text-md font-semibold text-slate-300 mb-2">Default API Keys (For All Users)</h3>
                                 <p className="text-slate-400 mb-4 text-sm">These are fallback keys. If a user doesn't provide their own key, the application will use these. Users on an expired trial cannot use these keys.</p>
                                 <div className="space-y-2">
-                                     <input type="password" placeholder="Default Gemini key" value={defaultApiKeys.gemini} onChange={(e) => setDefaultApiKeys(k => ({...k, gemini: e.target.value}))} className="w-full bg-slate-700 rounded-md p-2 border border-slate-600" />
-                                     <input type="password" placeholder="Default OpenAI key" value={defaultApiKeys.openAI} onChange={(e) => setDefaultApiKeys(k => ({...k, openAI: e.target.value}))} className="w-full bg-slate-700 rounded-md p-2 border border-slate-600" />
-                                     <input type="password" placeholder="Default OpenRouter key" value={defaultApiKeys.openRouter} onChange={(e) => setDefaultApiKeys(k => ({...k, openRouter: e.target.value}))} className="w-full bg-slate-700 rounded-md p-2 border border-slate-600" />
+                                    {Object.entries(AI_PROVIDERS).map(([provider, config]) => (
+                                        <input
+                                            key={provider}
+                                            type="password"
+                                            placeholder={`Default ${config.label} key`}
+                                            value={defaultApiKeys[config.apiKeyField]}
+                                            onChange={(e) => setDefaultApiKeys(k => ({ ...k, [config.apiKeyField]: e.target.value }))}
+                                            className="w-full bg-slate-700 rounded-md p-2 border border-slate-600"
+                                        />
+                                    ))}
                                      <input type="text" placeholder="Default Google Client ID (for Login)" value={defaultApiKeys.googleClientId} onChange={(e) => setDefaultApiKeys(k => ({...k, googleClientId: e.target.value}))} className="w-full bg-slate-700 rounded-md p-2 border border-slate-600" />
                                      <input type="password" placeholder="Default Stripe Secret Key" value={defaultApiKeys.stripeSecretKey} onChange={(e) => setDefaultApiKeys(k => ({...k, stripeSecretKey: e.target.value}))} className="w-full bg-slate-700 rounded-md p-2 border border-slate-600" />
                                      <input type="password" placeholder="Default PayPal Client Secret" value={defaultApiKeys.paypalClientSecret} onChange={(e) => setDefaultApiKeys(k => ({...k, paypalClientSecret: e.target.value}))} className="w-full bg-slate-700 rounded-md p-2 border border-slate-600" />

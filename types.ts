@@ -73,6 +73,14 @@ export interface ApiKeys {
     gemini: string;
     openAI: string;
     openRouter: string;
+    mistral: string;
+    groq: string;
+    together: string;
+    fireworks: string;
+    deepseek: string;
+    xai: string;
+    perplexity: string;
+    ollamaCloud: string;
     googleIndexing: string;
     indexNow: string;
     googleClientId: string;
@@ -116,7 +124,7 @@ export interface AIAgent {
   id?: number;
   user_id: string;
   name: string;
-  provider: 'gemini' | 'openai' | 'openrouter';
+  provider: 'gemini' | 'openai' | 'openrouter' | 'mistral' | 'groq' | 'together' | 'fireworks' | 'deepseek' | 'xai' | 'perplexity' | 'ollama_cloud';
   model: string;
   system_prompt: string;
   is_default?: boolean;

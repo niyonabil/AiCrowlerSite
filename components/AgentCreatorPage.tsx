@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { UserProfile, AIAgent } from '../types';
 import { supabase } from '../services/supabase';
 import { PlusIcon, StarIcon, XIcon } from './icons';
+import { providerOptions } from '../services/aiProviders';
 
 const emptyAgent: Omit<AIAgent, 'id' | 'user_id'> = {
     name: '',
@@ -132,10 +133,10 @@ export const AgentCreatorPage: React.FC<{ user: UserProfile }> = ({ user }) => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-slate-400 mb-1">AI Provider</label>
-                                    <select value={editingAgent.provider} onChange={e => setEditingAgent({...editingAgent, provider: e.target.value as 'gemini' | 'openai' | 'openrouter'})} className="w-full bg-slate-700 p-2 rounded-md border border-slate-600 focus:ring-cyan-500">
-                                        <option value="gemini">Gemini</option>
-                                        <option value="openai">OpenAI</option>
-                                        <option value="openrouter">OpenRouter</option>
+                                    <select value={editingAgent.provider} onChange={e => setEditingAgent({...editingAgent, provider: e.target.value as AIAgent['provider']})} className="w-full bg-slate-700 p-2 rounded-md border border-slate-600 focus:ring-cyan-500">
+                                        {providerOptions.map(option => (
+                                            <option key={option.value} value={option.value}>{option.label}</option>
+                                        ))}
                                     </select>
                                 </div>
                                 <div>
